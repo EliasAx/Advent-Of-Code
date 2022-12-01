@@ -36,5 +36,12 @@ public class Main {
         System.out.println(elfCalories.size());
         System.out.println(elfCalories);
         System.out.println(Collections.max(elfCalories));
+
+        /*
+            PART 2
+        */
+        Collections.sort(elfCalories);
+        int caloriesOfTopThreeElves = elfCalories.get(elfCalories.size()-1) + elfCalories.get(elfCalories.size()-2) + elfCalories.get(elfCalories.size()-3);
+        System.out.println(caloriesOfTopThreeElves);
     }
 }
