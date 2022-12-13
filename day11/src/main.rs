@@ -12,14 +12,6 @@ struct Monkey {
 }
 
 #[derive(Default, Debug, Clone)]
-struct MonkeyPart2 {
-    starting_items: VecDeque<LargeNumber>,
-    operation: Operation,
-    test: Test,
-    number_of_inspects: u64,
-}
-
-#[derive(Default, Debug, Clone)]
 struct Test {
     divisible_by: u8,
     test_success_monkey: usize,
@@ -73,14 +65,6 @@ impl Operation {
             Operand::Divide => val1 / val2,
         }
     }
-    fn perform_part2(&self, val1: &LargeNumber, val2: &LargeNumber) -> LargeNumber {
-        return match self.operand {
-            Operand::Add => val1.add(val2),
-            Operand::Subtract => val1.subtract(val2),
-            Operand::Multiply => val1.multiply(val2),
-            Operand::Divide => Default::default(), //Division never happens
-        }
-    }
 }
 
 impl Test {
@@ -89,13 +73,6 @@ impl Test {
             return self.test_success_monkey
         }
 
-        self.test_fail_monkey
-    }
-
-    fn perform_part2(&self, item_worry_level: &LargeNumber) -> usize {
-        if item_worry_level.is_divisible_by(self.divisible_by) {
-            return self.test_success_monkey
-        }
         self.test_fail_monkey
     }
 }
@@ -138,54 +115,16 @@ impl Monkey {
     fn relief(&mut self) {
         self.starting_items[0] = self.starting_items[0]/3;
     }
+    fn relief_part2(&mut self) {
+        self.starting_items[0] = self.starting_items[0]%9699690;
+    }
     fn throw(&mut self, monkey_to: &mut Monkey) {
         monkey_to.starting_items.push_back(self.starting_items.pop_front().unwrap());
     }
 }
 
-impl MonkeyPart2 {
-    fn inspect(&mut self) -> bool {
-        let current_worry_level = match self.starting_items.front() {
-            None => return false,
-            Some(item) => item
-        };
-
-        let val1;
-        let val2;
-
-        //If it's none the input was "old"
-        if self.operation.val1 == "old" {
-            val1 = current_worry_level.clone();
-        } else {
-            let vec= self.operation.val1.split("").filter(|&item| !item.is_empty()).map(|item| item.parse::<u64>().expect("Numbers plz")).collect();
-            val1 = LargeNumber{vec};
-        }
-        if self.operation.val2 == "old" {
-            val2 = current_worry_level.clone();
-        } else {
-            let vec= self.operation.val2.split("").filter(|&item| !item.is_empty()).map(|item| item.parse::<u64>().expect("Numbers plz")).collect();
-            val2 = LargeNumber{vec};
-        }
-
-        let new_worry_level = self.operation.perform_part2(&val1, &val2);
-
-        self.starting_items[0] = new_worry_level;
-        self.number_of_inspects += 1;
-
-        return true
-    }
-
-    // fn relief(&mut self) {
-    //     self.starting_items[0] = self.starting_items[0]/3;
-    // }
-
-    fn throw(&mut self, monkey_to: &mut MonkeyPart2) {
-        monkey_to.starting_items.push_back(self.starting_items.pop_front().unwrap());
-    }
-}
-
 fn main() {
-    let input = include_str!("../TestInput.txt");
+    let input = include_str!("../Input.txt");
 
     let monkeys_input = input.split("Monkey ").skip(1).collect::<Vec<&str>>();
     let mut monkeys = <Vec<Monkey>>::new();
@@ -255,17 +194,16 @@ fn part1(monkeys: &mut Vec<Monkey>) {
     println!("Level of monkey business: {}", monkey_business)
 }
 
-fn part2(monkeys_in: &mut Vec<Monkey>) {
-    let mut monkeys = convert_to_monkey_part2(monkeys_in);
-    println!("{:?}", monkeys);
+fn part2(monkeys: &mut Vec<Monkey>) {
 
-    let rounds = 200;
+    let rounds = 10000;
     for _ in 0..rounds {
         for index in 0..monkeys.len() {
             let mut monkey = monkeys[index].clone();
             // For as long as the monkey has items, inspect them
             while monkey.inspect() {
-                let monkey_id = monkey.test.perform_part2(monkey.starting_items.front().unwrap());
+                monkey.relief_part2();
+                let monkey_id = monkey.test.perform(monkey.starting_items.front().unwrap());
                 let monkey_to = &mut monkeys[monkey_id];
                 monkey.throw(monkey_to);
             }
@@ -292,26 +230,6 @@ fn part2(monkeys_in: &mut Vec<Monkey>) {
     let monkey_business = top_monkey1*top_monkey2;
     println!("Level of monkey business: {}", monkey_business)
 }
-
-fn convert_to_monkey_part2(monkeys: &mut Vec<Monkey>) ->  Vec<MonkeyPart2> {
-    let mut monkeys_part2: Vec<MonkeyPart2> = Vec::new();
-    for monkey in monkeys {
-        let mut large_number_starting_items: VecDeque<LargeNumber> = VecDeque::new();
-        for index in 0..monkey.starting_items.len() {
-            large_number_starting_items.push_back(convert_number_to_vector(monkey.starting_items[index]));
-        }
-        monkeys_part2.push(
-            MonkeyPart2 {
-                starting_items: large_number_starting_items,
-                operation: monkey.operation.clone(),
-                test: monkey.test.clone(),
-                number_of_inspects: 0
-            }
-        );
-    }
-    monkeys_part2
-}
-
 
 fn testing() {
     // let num1 = LargeNumber{vec:VecDeque::from([6, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3])};
