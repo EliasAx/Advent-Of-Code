@@ -1,4 +1,7 @@
 use std::collections::VecDeque;
+use crate::large_numer_handler::{convert_number_to_vector, LargeNumber};
+
+mod large_numer_handler;
 
 #[derive(Default, Debug, Clone)]
 struct Monkey {
@@ -112,6 +115,9 @@ impl Monkey {
     fn relief(&mut self) {
         self.starting_items[0] = self.starting_items[0]/3;
     }
+    fn relief_part2(&mut self) {
+        self.starting_items[0] = self.starting_items[0]%9699690;
+    }
     fn throw(&mut self, monkey_to: &mut Monkey) {
         monkey_to.starting_items.push_back(self.starting_items.pop_front().unwrap());
     }
@@ -147,7 +153,9 @@ fn main() {
         monkeys.push(monkey)
     }
 
-    part1(&mut monkeys);
+    // part1(&mut monkeys);
+    part2(&mut monkeys);
+    // testing();
 }
 
 fn part1(monkeys: &mut Vec<Monkey>) {
@@ -184,4 +192,85 @@ fn part1(monkeys: &mut Vec<Monkey>) {
 
     let monkey_business = top_monkey1*top_monkey2;
     println!("Level of monkey business: {}", monkey_business)
+}
+
+fn part2(monkeys: &mut Vec<Monkey>) {
+
+    let rounds = 10000;
+    for _ in 0..rounds {
+        for index in 0..monkeys.len() {
+            let mut monkey = monkeys[index].clone();
+            // For as long as the monkey has items, inspect them
+            while monkey.inspect() {
+                monkey.relief_part2();
+                let monkey_id = monkey.test.perform(monkey.starting_items.front().unwrap());
+                let monkey_to = &mut monkeys[monkey_id];
+                monkey.throw(monkey_to);
+            }
+
+            monkeys[index] = monkey;
+        }
+    }
+
+    let mut top_monkey1 = 0;
+    let mut top_monkey2 = 0;
+    let mut index = 0;
+    for monkey in monkeys {
+        if monkey.number_of_inspects > top_monkey1 {
+            top_monkey2 = top_monkey1;
+            top_monkey1 = monkey.number_of_inspects;
+        } else if monkey.number_of_inspects > top_monkey2 {
+            top_monkey2 = monkey.number_of_inspects;
+        }
+        println!("Monkey {} inspected items {} times", index, monkey.number_of_inspects);
+        // println!("{:?}", monkey.starting_items);
+        index += 1;
+    }
+
+    let monkey_business = top_monkey1*top_monkey2;
+    println!("Level of monkey business: {}", monkey_business)
+}
+
+fn testing() {
+    // let num1 = LargeNumber{vec:VecDeque::from([6, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3])};
+    // let num2 = LargeNumber{vec:VecDeque::from([6, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3, 5, 3, 5, 2, 5, 3])};
+    let num1 = LargeNumber{vec:VecDeque::from([7, 0])};
+    let num2 = LargeNumber{vec:VecDeque::from([6, 9])};
+    assert_eq!(convert_number_to_vector(432).vec, vec![4,3,2]);
+    assert_eq!(num1.add(&num2).vec, vec![1, 3, 9]);
+    assert_eq!(num1.subtract(&num2).vec, vec![0, 1]);
+    assert_eq!(num1.multiply(&num2).vec, vec![4, 8, 3, 0]);
+
+
+    let num1 = LargeNumber{vec:VecDeque::from([2, 4, 9])};
+    let num2 = LargeNumber{vec:VecDeque::from([6, 5])};
+    assert_eq!(num1.add(&num2).vec, vec![3, 1, 4]);
+    assert_eq!(num1.subtract(&num2).vec, vec![1, 8, 4]);
+    assert_eq!(num1.multiply(&num2).vec, vec![1, 6, 1, 8, 5]);
+
+
+    let num1 = LargeNumber{vec:VecDeque::from([2, 4, 9])};
+    let num2 = LargeNumber{vec:VecDeque::from([1, 5, 8, 7])};
+    assert_eq!(num1.add(&num2).vec, vec![1, 8, 3, 6]);
+    assert_eq!(num1.multiply(&num2).vec, vec![3, 9, 5, 1, 6, 3]);
+
+    let num1 = LargeNumber{vec:VecDeque::from([2, 2, 1])};
+    assert_eq!(num1.is_divisible_by(13), true);
+    assert_eq!(num1.is_divisible_by(17), true);
+    assert_eq!(num1.is_divisible_by(19), false);
+    assert_eq!(num1.is_divisible_by(23), false);
+
+
+    let num1 = LargeNumber{vec:VecDeque::from([2, 6, 6, 6, 9, 4, 9, 8])};
+    assert_eq!(num1.is_divisible_by(13), false);
+    assert_eq!(num1.is_divisible_by(17), true);
+    assert_eq!(num1.is_divisible_by(19), false);
+    assert_eq!(num1.is_divisible_by(23), false);
+
+
+    let num1 = LargeNumber{vec:VecDeque::from([2, 0, 3, 4, 3, 3, 1])};
+    assert_eq!(num1.is_divisible_by(13), true);
+    assert_eq!(num1.is_divisible_by(17), false);
+    assert_eq!(num1.is_divisible_by(19), false);
+    assert_eq!(num1.is_divisible_by(23), false);
 }
