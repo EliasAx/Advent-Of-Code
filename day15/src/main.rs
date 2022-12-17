@@ -23,8 +23,7 @@ fn main() {
 }
 
 fn part1(input: &str, row: i32) {
-    let mut beacon_data:Vec<BeaconRowData> = Vec::new();
-    let mut row_index_mapping:HashMap<i32, i32> = HashMap::new();
+    let mut beacon_data_row = Vec::new();
     let mut beacon_sensor_positions:HashSet<(i32, i32)> = HashSet::new();
 
     for line in input.lines() {
@@ -34,22 +33,12 @@ fn part1(input: &str, row: i32) {
         let manhattan_distance = (sensor.0-beacon.0).abs() + (sensor.1-beacon.1).abs();
         // println!("Manhattan distance: {}", manhattan_distance);
 
-        let mut y_index = 0;
-
-        for y in sensor.1-manhattan_distance..sensor.1+manhattan_distance+1 {
-            if row_index_mapping.contains_key(&y) {
-                let index = row_index_mapping[&y];
-                beacon_data[usize::try_from(index).unwrap()].ranges.push(sensor.0-y_index..sensor.0+y_index+1);
-            } else {
-                beacon_data.push(BeaconRowData{row: y, ranges: vec![sensor.0-y_index..sensor.0+y_index+1]});
-                row_index_mapping.insert(y, i32::try_from(beacon_data.len()).unwrap()-1);
-            }
-
-            if y >= sensor.1 {
-                y_index -= 1;
-            } else {
-                y_index += 1;
-            }
+        let range = sensor.1-manhattan_distance..sensor.1+manhattan_distance+1;
+        if range.contains(&row) {
+            let mid = sensor.1;
+            let rows_away_from_mid = (row-mid).abs();
+            let distance_at_row = manhattan_distance-rows_away_from_mid;
+            beacon_data_row.push(sensor.0-distance_at_row..sensor.0+distance_at_row+1)
         }
 
         beacon_sensor_positions.insert(sensor);
@@ -58,9 +47,9 @@ fn part1(input: &str, row: i32) {
 
     let mut beacon_cannot_be_present = 0;
 
-    // println!("{:?}", beacon_data[usize::try_from(row_index_mapping[&row]).unwrap()].ranges.clone());
+    // println!("{:?}", beacon_data_row.clone());
 
-    let aggregated_ranges = aggregate_ranges(beacon_data[usize::try_from(row_index_mapping[&row]).unwrap()].ranges.clone(), 0);
+    let aggregated_ranges = aggregate_ranges(beacon_data_row.clone(), 0);
 
     // println!("{:?}", aggregated_ranges);
 
