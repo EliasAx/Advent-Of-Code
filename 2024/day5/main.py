@@ -1,5 +1,5 @@
 def main():
-    inputFile = open("TestInput.txt", "r")
+    inputFile = open("Input.txt", "r")
     lines = inputFile.read().splitlines()
     index = 0
     rules = []
@@ -40,9 +40,12 @@ def part2(updates, rules):
             page = pages[index]
             if not isPageCorrectlyOrdered(rules, pages, page, index):
                 incorrectlyOrderedUpdates.append(update)
+                break
 
     for update in incorrectlyOrderedUpdates:
-        orderUpdate(update, rules)
+        ordered = orderUpdate(update, rules)
+        middleIndex = int((len(ordered) - 1) / 2)
+        sum += int(ordered[middleIndex])
 
     print(sum)
 
@@ -54,31 +57,21 @@ def findIndex(list, elem):
     return -1
 
 
-def isPageCorrectlyOrdered(rules, update, page, currentPageIndex):
-    # print("The update: ", update)
+def isPageCorrectlyOrdered(rules, updatePages, page, currentPageIndex):
     for rule in rules:
-        # print("\n\n")
         if page in rule:
             ruleParts = rule.split("|")
             indexOfRulePage = 0
-            # print("Current rule: ", rule)
-            # print("Current page: ", page)
-            # print("Current page index: ", currentPageIndex)
             if page == ruleParts[0]:
-                # print("Page is on the left, so index should be higher")
-                indexOfRulePage = findIndex(update, ruleParts[1])
-                # print("Index of the other part of the rule: ", indexOfRulePage)
+                indexOfRulePage = findIndex(updatePages, ruleParts[1])
                 if indexOfRulePage == -1:
                     continue
                 if indexOfRulePage > currentPageIndex:
-                    # correctly ordered
                     continue
                 else:
                     return False
             elif page == ruleParts[1]:
-                # print("Page is on the right, so index should be lower")
-                indexOfRulePage = findIndex(update, ruleParts[0])
-                # print("Index of the other part of the rule: ", indexOfRulePage)
+                indexOfRulePage = findIndex(updatePages, ruleParts[0])
                 if indexOfRulePage == -1:
                     continue
                 if indexOfRulePage < currentPageIndex:
@@ -91,7 +84,21 @@ def isPageCorrectlyOrdered(rules, update, page, currentPageIndex):
 
 
 def orderUpdate(update, rules):
-    print("a")
+    pages = update.split(",")
+    switches = -1
+    while switches != 0:
+        switches = 0
+        for pageIndex in range(1, len(pages)):
+            for rule in rules:
+                leftRule = rule.split("|")[0]
+                rightRule = rule.split("|")[1]
+                if pages[pageIndex - 1] == rightRule and pages[pageIndex] == leftRule:
+                    # Switch
+                    tmp = pages[pageIndex - 1]
+                    pages[pageIndex - 1] = pages[pageIndex]
+                    pages[pageIndex] = tmp
+                    switches += 1
+    return pages
 
 
 if __name__ == "__main__":
