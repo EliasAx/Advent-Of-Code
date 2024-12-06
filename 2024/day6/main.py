@@ -52,10 +52,9 @@ def changeDirection(direction):
 
 
 def part2(map, currentPosition):
-    startPos = currentPosition
     sum = 0
     direction = (-1, 0)
-    obstaclesHit = []
+    obstaclesHit = dict()
     obstaclePositions = []
     while True:
         currentRow = currentPosition[0]
@@ -67,28 +66,15 @@ def part2(map, currentPosition):
         elif nextCol < 0 or nextCol >= len(map[nextRow]):
             break
         if map[nextRow][nextCol] == "#":
+            obstaclesHit[(nextRow, nextCol)] = direction
             direction = changeDirection(direction)
-            obstaclesHit.append((nextRow, nextCol))
             if len(obstaclesHit) >= 3:
-                pos = getObstaclePositionForLoop(
-                    currentPosition,
-                    direction,
-                    obstaclesHit[len(obstaclesHit) - 3],
+                placements = placeForObstacle(
+                    map, currentPosition, direction, obstaclesHit
                 )
-                if not thereIsObstacleBetweenPoints(
-                    map, currentPosition, pos, direction
-                ):
-                    if not pos in obstaclePositions:
-                        obstaclePositions.append(pos)
-                        sum += 1
-                if direction[1] == -1:
-                    pos = (currentPosition[0], startPos[1] + direction[1])
-                    if not thereIsObstacleBetweenPoints(
-                        map, currentPosition, pos, direction
-                    ):
-                        if not pos in obstaclePositions:
-                            obstaclePositions.append(pos)
-                            sum += 1
+                if len(placements) > 0:
+                    obstaclePositions.extend(placements)
+                sum += len(placements)
 
             continue
 
@@ -98,23 +84,49 @@ def part2(map, currentPosition):
     print(sum)
 
 
-def getObstaclePositionForLoop(currentPosition, direction, obstacleForLoopPos):
-    if direction[0] != 0:
-        return (obstacleForLoopPos[0] + direction[0], currentPosition[1])
-    elif direction[1] != 0:
-        return (currentPosition[0], obstacleForLoopPos[1] + direction[1])
-
-
-def thereIsObstacleBetweenPoints(map, currentPosition, obstaclePosition, direction):
+def placeForObstacle(map, currentPosition, direction, obstaclesHit):
+    placements = []
     while True:
         currentRow = currentPosition[0]
         currentCol = currentPosition[1]
         nextRow = currentRow + direction[0]
         nextCol = currentCol + direction[1]
-        if (nextRow, nextCol) == obstaclePosition:
+        if nextRow < 0 or nextRow >= len(map):
+            break
+        elif nextCol < 0 or nextCol >= len(map[nextRow]):
             break
         if map[nextRow][nextCol] == "#":
-            return True
+            break
+        currentPosition = (nextRow, nextCol)
+        if canHitObstacleSameDirection(
+            map, currentPosition, changeDirection(direction), obstaclesHit
+        ):
+            placements.append(
+                (currentPosition[0] + direction[0], currentPosition[1] + direction[1])
+            )
+
+    return placements
+
+
+def canHitObstacleSameDirection(map, currentPosition, direction, obstaclesHit):
+    while True:
+        currentRow = currentPosition[0]
+        currentCol = currentPosition[1]
+        nextRow = currentRow + direction[0]
+        nextCol = currentCol + direction[1]
+        if nextRow < 0 or nextRow >= len(map):
+            break
+        elif nextCol < 0 or nextCol >= len(map[nextRow]):
+            break
+        if map[nextRow][nextCol] == "#":
+            key = (nextRow, nextCol)
+            if key in obstaclesHit:
+                if obstaclesHit[key] == direction:
+                    return True
+                else:
+                    return False
+            else:
+                return False
         currentPosition = (nextRow, nextCol)
 
     return False
