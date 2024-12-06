@@ -1,3 +1,6 @@
+from copy import copy, deepcopy
+
+
 def main():
     inputFile = open("Input.txt", "r")
     lines = inputFile.read().splitlines()
@@ -11,7 +14,7 @@ def main():
                 currentPosition = (rowIndex, colIndex)
                 break
 
-    part1(map, currentPosition)
+    part1(deepcopy(map), currentPosition)
     part2(map, currentPosition)
 
 
@@ -52,10 +55,10 @@ def changeDirection(direction):
 
 
 def part2(map, currentPosition):
-    sum = 0
+    startPos = currentPosition
     direction = (-1, 0)
-    obstaclesHit = dict()
-    obstaclePositions = []
+    startDir = (-1, 0)
+    obstacleLoopPositions = []
     while True:
         currentRow = currentPosition[0]
         currentCol = currentPosition[1]
@@ -66,69 +69,66 @@ def part2(map, currentPosition):
         elif nextCol < 0 or nextCol >= len(map[nextRow]):
             break
         if map[nextRow][nextCol] == "#":
-            obstaclesHit[(nextRow, nextCol)] = direction
             direction = changeDirection(direction)
-            if len(obstaclesHit) >= 3:
-                placements = placeForObstacle(
-                    map, currentPosition, direction, obstaclesHit
-                )
-                if len(placements) > 0:
-                    obstaclePositions.extend(placements)
-                sum += len(placements)
-
             continue
+        else:
+            if obstacleInDirection(map, currentPosition, changeDirection(direction)):
+                if (
+                    currentPosition[0] + direction[0],
+                    currentPosition[1] + direction[1],
+                ) not in obstacleLoopPositions:
+                    newMap = deepcopy(map)
+                    newMap[currentPosition[0] + direction[0]][
+                        currentPosition[1] + direction[1]
+                    ] = "#"
+                    if isInLoop(newMap, startPos, startDir):
+                        obstacleLoopPositions.append(
+                            (
+                                currentPosition[0] + direction[0],
+                                currentPosition[1] + direction[1],
+                            )
+                        )
 
         currentPosition = (nextRow, nextCol)
 
-    print(obstaclePositions)
-    print(sum)
+    print(len(obstacleLoopPositions))
 
 
-def placeForObstacle(map, currentPosition, direction, obstaclesHit):
-    placements = []
+def isInLoop(map, currentPosition, direction):
+    obstaclesHit = dict()
     while True:
         currentRow = currentPosition[0]
         currentCol = currentPosition[1]
         nextRow = currentRow + direction[0]
         nextCol = currentCol + direction[1]
         if nextRow < 0 or nextRow >= len(map):
-            break
+            return False
         elif nextCol < 0 or nextCol >= len(map[nextRow]):
-            break
-        if map[nextRow][nextCol] == "#":
-            break
-        currentPosition = (nextRow, nextCol)
-        if canHitObstacleSameDirection(
-            map, currentPosition, changeDirection(direction), obstaclesHit
-        ):
-            placements.append(
-                (currentPosition[0] + direction[0], currentPosition[1] + direction[1])
-            )
-
-    return placements
-
-
-def canHitObstacleSameDirection(map, currentPosition, direction, obstaclesHit):
-    while True:
-        currentRow = currentPosition[0]
-        currentCol = currentPosition[1]
-        nextRow = currentRow + direction[0]
-        nextCol = currentCol + direction[1]
-        if nextRow < 0 or nextRow >= len(map):
-            break
-        elif nextCol < 0 or nextCol >= len(map[nextRow]):
-            break
+            return False
         if map[nextRow][nextCol] == "#":
             key = (nextRow, nextCol)
             if key in obstaclesHit:
                 if obstaclesHit[key] == direction:
                     return True
-                else:
-                    return False
-            else:
-                return False
+            obstaclesHit[key] = direction
+            direction = changeDirection(direction)
+            continue
         currentPosition = (nextRow, nextCol)
 
+
+def obstacleInDirection(map, currentPosition, direction):
+    while True:
+        currentRow = currentPosition[0]
+        currentCol = currentPosition[1]
+        nextRow = currentRow + direction[0]
+        nextCol = currentCol + direction[1]
+        if nextRow < 0 or nextRow >= len(map):
+            break
+        elif nextCol < 0 or nextCol >= len(map[nextRow]):
+            break
+        if map[nextRow][nextCol] == "#":
+            return True
+        currentPosition = (nextRow, nextCol)
     return False
 
 
