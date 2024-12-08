@@ -57,6 +57,8 @@ def matchesResult(combination):
                     calc[0] = firstNumber * secondNumber
                 else:
                     calc[0] = int(str(firstNumber) + str(secondNumber))
+            if calc[0] > result:
+                continue
             if calc[0] == result:
                 successFul += result
                 break
