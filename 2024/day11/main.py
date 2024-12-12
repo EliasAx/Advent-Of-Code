@@ -1,4 +1,5 @@
 from copy import deepcopy
+import time
 
 
 def main():
@@ -9,7 +10,10 @@ def main():
         stones.append(int(stone))
 
     part1(deepcopy(stones))
+    start = time.time()
     part2(stones)
+    end = time.time()
+    print(end - start)
 
 
 def part1(stones):
